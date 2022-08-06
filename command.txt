@@ -1,0 +1,5 @@
+
+# for stuff
+
+NDKBINS="the dir with your ndk binaries"
+./configure --disable-doc --disable-programs --logfile=../build.log --enable-version3 --enable-openssl --arch="armeabi-v7a" --enable-neon --target-os=android --as="$NDKBINS/llvm-as" --cc="$NDKBINS/armv7a-linux-androideabi16-clang" --cxx="$NDKBINS/armv7a-linux-androideabi16-clang++" --strip="$NDKBINS/llvm-strip" --enable-cross-compile --cross-prefix="$NDKBINS/../"
