@@ -182,7 +182,6 @@ static void dump_video_param(AVCodecContext *avctx, QSVEncContext *q,
     mfxExtCodingOption2 *co2 = NULL;
     mfxExtCodingOption3 *co3 = NULL;
     mfxExtHEVCTiles *exthevctiles = NULL;
-    const char *tmp_str = NULL;
 
     if (q->co2_idx > 0)
         co2 = (mfxExtCodingOption2*)coding_opts[q->co2_idx];
@@ -196,12 +195,13 @@ static void dump_video_param(AVCodecContext *avctx, QSVEncContext *q,
     av_log(avctx, AV_LOG_VERBOSE, "profile: %s; level: %"PRIu16"\n",
            print_profile(avctx->codec_id, info->CodecProfile), info->CodecLevel);
 
-    av_log(avctx, AV_LOG_VERBOSE,
-           "GopPicSize: %"PRIu16"; GopRefDist: %"PRIu16"; GopOptFlag:%s%s; IdrInterval: %"PRIu16"\n",
-           info->GopPicSize, info->GopRefDist,
-           info->GopOptFlag & MFX_GOP_CLOSED ? " closed" : "",
-           info->GopOptFlag & MFX_GOP_STRICT ? " strict" : "",
-           info->IdrInterval);
+    av_log(avctx, AV_LOG_VERBOSE, "GopPicSize: %"PRIu16"; GopRefDist: %"PRIu16"; GopOptFlag: ",
+           info->GopPicSize, info->GopRefDist);
+    if (info->GopOptFlag & MFX_GOP_CLOSED)
+        av_log(avctx, AV_LOG_VERBOSE, "closed ");
+    if (info->GopOptFlag & MFX_GOP_STRICT)
+        av_log(avctx, AV_LOG_VERBOSE, "strict ");
+    av_log(avctx, AV_LOG_VERBOSE, "; IdrInterval: %"PRIu16"\n", info->IdrInterval);
 
     av_log(avctx, AV_LOG_VERBOSE, "TargetUsage: %"PRIu16"; RateControlMethod: %s\n",
            info->TargetUsage, print_ratecontrol(info->RateControlMethod));
@@ -269,46 +269,45 @@ static void dump_video_param(AVCodecContext *avctx, QSVEncContext *q,
         av_log(avctx, AV_LOG_VERBOSE, "IntRefType: %"PRIu16"; IntRefCycleSize: %"PRIu16"; IntRefQPDelta: %"PRId16"\n",
                co2->IntRefType, co2->IntRefCycleSize, co2->IntRefQPDelta);
 
-        av_log(avctx, AV_LOG_VERBOSE, "MaxFrameSize: %d; MaxSliceSize: %d\n",
-               co2->MaxFrameSize, co2->MaxSliceSize);
+        av_log(avctx, AV_LOG_VERBOSE, "MaxFrameSize: %d; ", co2->MaxFrameSize);
+        av_log(avctx, AV_LOG_VERBOSE, "MaxSliceSize: %d; ", co2->MaxSliceSize);
+        av_log(avctx, AV_LOG_VERBOSE, "\n");
 
         av_log(avctx, AV_LOG_VERBOSE,
                "BitrateLimit: %s; MBBRC: %s; ExtBRC: %s\n",
                print_threestate(co2->BitrateLimit), print_threestate(co2->MBBRC),
                print_threestate(co2->ExtBRC));
 
+        av_log(avctx, AV_LOG_VERBOSE, "Trellis: ");
         if (co2->Trellis & MFX_TRELLIS_OFF) {
-            av_log(avctx, AV_LOG_VERBOSE, "Trellis: off\n");
+            av_log(avctx, AV_LOG_VERBOSE, "off");
         } else if (!co2->Trellis) {
-            av_log(avctx, AV_LOG_VERBOSE, "Trellis: auto\n");
+            av_log(avctx, AV_LOG_VERBOSE, "auto");
         } else {
-            char trellis_type[4];
-            int i = 0;
-            if (co2->Trellis & MFX_TRELLIS_I) trellis_type[i++] = 'I';
-            if (co2->Trellis & MFX_TRELLIS_P) trellis_type[i++] = 'P';
-            if (co2->Trellis & MFX_TRELLIS_B) trellis_type[i++] = 'B';
-            trellis_type[i] = 0;
-            av_log(avctx, AV_LOG_VERBOSE, "Trellis: %s\n", trellis_type);
+            if (co2->Trellis & MFX_TRELLIS_I) av_log(avctx, AV_LOG_VERBOSE, "I");
+            if (co2->Trellis & MFX_TRELLIS_P) av_log(avctx, AV_LOG_VERBOSE, "P");
+            if (co2->Trellis & MFX_TRELLIS_B) av_log(avctx, AV_LOG_VERBOSE, "B");
         }
+        av_log(avctx, AV_LOG_VERBOSE, "\n");
 
+        av_log(avctx, AV_LOG_VERBOSE,
+               "RepeatPPS: %s; NumMbPerSlice: %"PRIu16"; LookAheadDS: ",
+               print_threestate(co2->RepeatPPS), co2->NumMbPerSlice);
         switch (co2->LookAheadDS) {
-        case MFX_LOOKAHEAD_DS_OFF: tmp_str = "off";     break;
-        case MFX_LOOKAHEAD_DS_2x:  tmp_str = "2x";      break;
-        case MFX_LOOKAHEAD_DS_4x:  tmp_str = "4x";      break;
-        default:                   tmp_str = "unknown"; break;
+        case MFX_LOOKAHEAD_DS_OFF: av_log(avctx, AV_LOG_VERBOSE, "off");     break;
+        case MFX_LOOKAHEAD_DS_2x:  av_log(avctx, AV_LOG_VERBOSE, "2x");      break;
+        case MFX_LOOKAHEAD_DS_4x:  av_log(avctx, AV_LOG_VERBOSE, "4x");      break;
+        default:                   av_log(avctx, AV_LOG_VERBOSE, "unknown"); break;
         }
-        av_log(avctx, AV_LOG_VERBOSE,
-               "RepeatPPS: %s; NumMbPerSlice: %"PRIu16"; LookAheadDS: %s\n",
-               print_threestate(co2->RepeatPPS), co2->NumMbPerSlice, tmp_str);
+        av_log(avctx, AV_LOG_VERBOSE, "\n");
 
+        av_log(avctx, AV_LOG_VERBOSE, "AdaptiveI: %s; AdaptiveB: %s; BRefType: ",
+               print_threestate(co2->AdaptiveI), print_threestate(co2->AdaptiveB));
         switch (co2->BRefType) {
-        case MFX_B_REF_OFF:     tmp_str = "off";       break;
-        case MFX_B_REF_PYRAMID: tmp_str = "pyramid";   break;
-        default:                tmp_str = "auto";      break;
+        case MFX_B_REF_OFF:     av_log(avctx, AV_LOG_VERBOSE, "off");       break;
+        case MFX_B_REF_PYRAMID: av_log(avctx, AV_LOG_VERBOSE, "pyramid");   break;
+        default:                av_log(avctx, AV_LOG_VERBOSE, "auto");      break;
         }
-        av_log(avctx, AV_LOG_VERBOSE,
-               "AdaptiveI: %s; AdaptiveB: %s; BRefType:%s\n",
-               print_threestate(co2->AdaptiveI), print_threestate(co2->AdaptiveB), tmp_str);
 
         av_log(avctx, AV_LOG_VERBOSE,
                "MinQPI: %"PRIu8"; MaxQPI: %"PRIu8"; MinQPP: %"PRIu8"; MaxQPP: %"PRIu8"; MinQPB: %"PRIu8"; MaxQPB: %"PRIu8"\n",
@@ -320,12 +319,14 @@ static void dump_video_param(AVCodecContext *avctx, QSVEncContext *q,
         if (info->RateControlMethod == MFX_RATECONTROL_QVBR)
             av_log(avctx, AV_LOG_VERBOSE, "QVBRQuality: %"PRIu16"\n", co3->QVBRQuality);
 
+        av_log(avctx, AV_LOG_VERBOSE, "PRefType: ");
         switch (co3->PRefType) {
-        case MFX_P_REF_DEFAULT: av_log(avctx, AV_LOG_VERBOSE, "PRefType: default\n");   break;
-        case MFX_P_REF_SIMPLE:  av_log(avctx, AV_LOG_VERBOSE, "PRefType: simple\n");    break;
-        case MFX_P_REF_PYRAMID: av_log(avctx, AV_LOG_VERBOSE, "PRefType: pyramid\n");   break;
-        default:                av_log(avctx, AV_LOG_VERBOSE, "PRefType: unknown\n");   break;
+        case MFX_P_REF_DEFAULT: av_log(avctx, AV_LOG_VERBOSE, "default");   break;
+        case MFX_P_REF_SIMPLE:  av_log(avctx, AV_LOG_VERBOSE, "simple");    break;
+        case MFX_P_REF_PYRAMID: av_log(avctx, AV_LOG_VERBOSE, "pyramid");   break;
+        default:                av_log(avctx, AV_LOG_VERBOSE, "unknown");   break;
         }
+        av_log(avctx, AV_LOG_VERBOSE, "\n");
 
         if (avctx->codec_id == AV_CODEC_ID_HEVC)
             av_log(avctx, AV_LOG_VERBOSE,"GPB: %s\n", print_threestate(co3->GPB));
@@ -359,12 +360,13 @@ static void dump_video_vp9_param(AVCodecContext *avctx, QSVEncContext *q,
     av_log(avctx, AV_LOG_VERBOSE, "profile: %s \n",
            print_profile(avctx->codec_id, info->CodecProfile));
 
-    av_log(avctx, AV_LOG_VERBOSE,
-           "GopPicSize: %"PRIu16"; GopRefDist: %"PRIu16"; GopOptFlag:%s%s; IdrInterval: %"PRIu16"\n",
-           info->GopPicSize, info->GopRefDist,
-           info->GopOptFlag & MFX_GOP_CLOSED ? " closed" : "",
-           info->GopOptFlag & MFX_GOP_STRICT ? " strict" : "",
-           info->IdrInterval);
+    av_log(avctx, AV_LOG_VERBOSE, "GopPicSize: %"PRIu16"; GopRefDist: %"PRIu16"; GopOptFlag: ",
+           info->GopPicSize, info->GopRefDist);
+    if (info->GopOptFlag & MFX_GOP_CLOSED)
+        av_log(avctx, AV_LOG_VERBOSE, "closed ");
+    if (info->GopOptFlag & MFX_GOP_STRICT)
+        av_log(avctx, AV_LOG_VERBOSE, "strict ");
+    av_log(avctx, AV_LOG_VERBOSE, "; IdrInterval: %"PRIu16"\n", info->IdrInterval);
 
     av_log(avctx, AV_LOG_VERBOSE, "TargetUsage: %"PRIu16"; RateControlMethod: %s\n",
            info->TargetUsage, print_ratecontrol(info->RateControlMethod));
@@ -394,7 +396,8 @@ static void dump_video_vp9_param(AVCodecContext *avctx, QSVEncContext *q,
                "IntRefType: %"PRIu16"; IntRefCycleSize: %"PRIu16"; IntRefQPDelta: %"PRId16"\n",
                co2->IntRefType, co2->IntRefCycleSize, co2->IntRefQPDelta);
 
-        av_log(avctx, AV_LOG_VERBOSE, "MaxFrameSize: %d\n", co2->MaxFrameSize);
+        av_log(avctx, AV_LOG_VERBOSE, "MaxFrameSize: %d; ", co2->MaxFrameSize);
+        av_log(avctx, AV_LOG_VERBOSE, "\n");
 
         av_log(avctx, AV_LOG_VERBOSE,
                "BitrateLimit: %s; MBBRC: %s; ExtBRC: %s\n",
@@ -735,11 +738,6 @@ static int init_video_param(AVCodecContext *avctx, QSVEncContext *q)
         q->param.mfx.QPI = av_clip(quant * fabs(avctx->i_quant_factor) + avctx->i_quant_offset, 0, 51);
         q->param.mfx.QPP = av_clip(quant, 0, 51);
         q->param.mfx.QPB = av_clip(quant * fabs(avctx->b_quant_factor) + avctx->b_quant_offset, 0, 51);
-        q->old_global_quality = avctx->global_quality;
-        q->old_i_quant_factor = avctx->i_quant_factor;
-        q->old_i_quant_offset = avctx->i_quant_offset;
-        q->old_b_quant_factor = avctx->b_quant_factor;
-        q->old_b_quant_offset = avctx->b_quant_offset;
 
         break;
 #if QSV_HAVE_AVBR
@@ -1623,31 +1621,38 @@ static int set_roi_encode_ctrl(AVCodecContext *avctx, const AVFrame *frame,
     return 0;
 }
 
-static int update_qp(AVCodecContext *avctx, QSVEncContext *q)
+static int update_qp(AVCodecContext *avctx, QSVEncContext *q,
+                     const AVFrame *frame)
 {
-    int updated = 0, new_qp = 0;
+    int updated = 0, qp = 0, new_qp;
+    char *tail;
+    AVDictionaryEntry *entry = NULL;
 
     if (avctx->codec_id != AV_CODEC_ID_H264 && avctx->codec_id != AV_CODEC_ID_HEVC)
         return 0;
 
-    if (q->param.mfx.RateControlMethod == MFX_RATECONTROL_CQP) {
-        UPDATE_PARAM(q->old_global_quality, avctx->global_quality);
-        UPDATE_PARAM(q->old_i_quant_factor, avctx->i_quant_factor);
-        UPDATE_PARAM(q->old_i_quant_offset, avctx->i_quant_offset);
-        UPDATE_PARAM(q->old_b_quant_factor, avctx->b_quant_factor);
-        UPDATE_PARAM(q->old_b_quant_offset, avctx->b_quant_offset);
-        if (!updated)
+    entry = av_dict_get(frame->metadata, "qsv_config_qp", NULL, 0);
+    if (entry && q->param.mfx.RateControlMethod == MFX_RATECONTROL_CQP) {
+        qp = strtol(entry->value, &tail, 10);
+        if (*tail) {
+            av_log(avctx, AV_LOG_WARNING, "Invalid qsv_config_qp string. Ignore this metadata\n");
             return 0;
-
-        new_qp = avctx->global_quality / FF_QP2LAMBDA;
-        q->param.mfx.QPI = av_clip(new_qp * fabs(avctx->i_quant_factor) +
-                                    avctx->i_quant_offset, 0, 51);
-        q->param.mfx.QPP = av_clip(new_qp, 0, 51);
-        q->param.mfx.QPB = av_clip(new_qp * fabs(avctx->b_quant_factor) +
-                                    avctx->b_quant_offset, 0, 51);
+        }
+        if (qp < 0 || qp > 51) {
+            av_log(avctx, AV_LOG_WARNING, "Invalid qp, clip to 0 ~ 51\n");
+            qp = av_clip(qp, 0, 51);
+        }
+        av_log(avctx, AV_LOG_DEBUG, "Configure qp: %d\n",qp);
+        UPDATE_PARAM(q->param.mfx.QPP, qp);
+        new_qp = av_clip(qp * fabs(avctx->i_quant_factor) +
+                            avctx->i_quant_offset, 0, 51);
+        UPDATE_PARAM(q->param.mfx.QPI, new_qp);
+        new_qp = av_clip(qp * fabs(avctx->b_quant_factor) +
+                            avctx->b_quant_offset, 0, 51);
+        UPDATE_PARAM(q->param.mfx.QPB, new_qp);
         av_log(avctx, AV_LOG_DEBUG,
-               "Reset qp = %d/%d/%d for idr/p/b frames\n",
-               q->param.mfx.QPI, q->param.mfx.QPP, q->param.mfx.QPB);
+                "using fixed qp = %d/%d/%d for idr/p/b frames\n",
+                q->param.mfx.QPI, q->param.mfx.QPP, q->param.mfx.QPB);
     }
     return updated;
 }
@@ -1660,7 +1665,7 @@ static int update_parameters(AVCodecContext *avctx, QSVEncContext *q,
     if (!frame)
         return 0;
 
-    needReset = update_qp(avctx, q);
+    needReset = update_qp(avctx, q, frame);
     if (!needReset)
         return 0;
 

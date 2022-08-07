@@ -589,4 +589,5 @@ const FFCodec ff_tiff_encoder = {
         AV_PIX_FMT_NONE
     },
     .p.priv_class   = &tiffenc_class,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };

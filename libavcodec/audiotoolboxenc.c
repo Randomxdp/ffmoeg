@@ -634,6 +634,7 @@ static const AVOption options[] = {
             AV_SAMPLE_FMT_S16, \
             AV_SAMPLE_FMT_U8,  AV_SAMPLE_FMT_NONE \
         }, \
+        .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE, \
         .p.profiles     = PROFILES, \
         .p.wrapper_name = "at", \
     };

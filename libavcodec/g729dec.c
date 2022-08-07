@@ -762,6 +762,7 @@ const FFCodec ff_g729_decoder = {
     FF_CODEC_DECODE_CB(decode_frame),
     .close          = decode_close,
     .p.capabilities = AV_CODEC_CAP_SUBFRAMES | AV_CODEC_CAP_DR1,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };
 
 const FFCodec ff_acelp_kelvin_decoder = {
@@ -774,4 +775,5 @@ const FFCodec ff_acelp_kelvin_decoder = {
     FF_CODEC_DECODE_CB(decode_frame),
     .close          = decode_close,
     .p.capabilities = AV_CODEC_CAP_SUBFRAMES | AV_CODEC_CAP_DR1,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };

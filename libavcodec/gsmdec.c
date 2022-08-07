@@ -123,6 +123,7 @@ const FFCodec ff_gsm_decoder = {
     FF_CODEC_DECODE_CB(gsm_decode_frame),
     .flush          = gsm_flush,
     .p.capabilities = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_CHANNEL_CONF,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };
 #endif
 #if CONFIG_GSM_MS_DECODER
@@ -136,5 +137,6 @@ const FFCodec ff_gsm_ms_decoder = {
     FF_CODEC_DECODE_CB(gsm_decode_frame),
     .flush          = gsm_flush,
     .p.capabilities = AV_CODEC_CAP_DR1 | AV_CODEC_CAP_CHANNEL_CONF,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };
 #endif

@@ -173,35 +173,22 @@ int ff_hevc_set_new_ref(HEVCContext *s, AVFrame **frame, int poc)
     return 0;
 }
 
-static void unref_missing_refs(HEVCContext *s)
-{
-    for (int i = 0; i < FF_ARRAY_ELEMS(s->DPB); i++) {
-         HEVCFrame *frame = &s->DPB[i];
-         if (frame->sequence == HEVC_SEQUENCE_COUNTER_INVALID) {
-             ff_hevc_unref_frame(s, frame, ~0);
-         }
-    }
-}
-
 int ff_hevc_output_frame(HEVCContext *s, AVFrame *out, int flush)
 {
-    if (IS_IRAP(s) && s->no_rasl_output_flag == 1) {
-        const static int mask = HEVC_FRAME_FLAG_BUMPING | HEVC_FRAME_FLAG_OUTPUT;
-        for (int i = 0; i < FF_ARRAY_ELEMS(s->DPB); i++) {
-            HEVCFrame *frame = &s->DPB[i];
-            if ((frame->flags & mask) == HEVC_FRAME_FLAG_OUTPUT &&
-                frame->sequence != s->seq_decode) {
-                if (s->sh.no_output_of_prior_pics_flag == 1)
-                    ff_hevc_unref_frame(s, frame, HEVC_FRAME_FLAG_OUTPUT);
-                else
-                    frame->flags |= HEVC_FRAME_FLAG_BUMPING;
-            }
-        }
-    }
     do {
         int nb_output = 0;
         int min_poc   = INT_MAX;
         int i, min_idx, ret;
+
+        if (s->sh.no_output_of_prior_pics_flag == 1 && s->no_rasl_output_flag == 1) {
+            for (i = 0; i < FF_ARRAY_ELEMS(s->DPB); i++) {
+                HEVCFrame *frame = &s->DPB[i];
+                if (!(frame->flags & HEVC_FRAME_FLAG_BUMPING) && frame->poc != s->poc &&
+                        frame->sequence == s->seq_output) {
+                    ff_hevc_unref_frame(s, frame, HEVC_FRAME_FLAG_OUTPUT);
+                }
+            }
+        }
 
         for (i = 0; i < FF_ARRAY_ELEMS(s->DPB); i++) {
             HEVCFrame *frame = &s->DPB[i];
@@ -243,7 +230,7 @@ int ff_hevc_output_frame(HEVCContext *s, AVFrame *out, int flush)
         }
 
         if (s->seq_output != s->seq_decode)
-            s->seq_output = (s->seq_output + 1) & HEVC_SEQUENCE_COUNTER_MASK;
+            s->seq_output = (s->seq_output + 1) & 0xff;
         else
             break;
     } while (1);
@@ -387,7 +374,7 @@ static HEVCFrame *find_ref_idx(HEVCContext *s, int poc, uint8_t use_msb)
     for (i = 0; i < FF_ARRAY_ELEMS(s->DPB); i++) {
         HEVCFrame *ref = &s->DPB[i];
         if (ref->frame->buf[0] && ref->sequence == s->seq_decode) {
-            if ((ref->poc & mask) == poc && (use_msb || ref->poc != s->poc))
+            if ((ref->poc & mask) == poc)
                 return ref;
         }
     }
@@ -429,7 +416,7 @@ static HEVCFrame *generate_missing_ref(HEVCContext *s, int poc)
     }
 
     frame->poc      = poc;
-    frame->sequence = HEVC_SEQUENCE_COUNTER_INVALID;
+    frame->sequence = s->seq_decode;
     frame->flags    = 0;
 
     if (s->threads_type == FF_THREAD_FRAME)
@@ -472,8 +459,6 @@ int ff_hevc_frame_rps(HEVCContext *s)
         rps[0].nb_refs = rps[1].nb_refs = 0;
         return 0;
     }
-
-    unref_missing_refs(s);
 
     /* clear the reference flags on all frames except the current one */
     for (i = 0; i < FF_ARRAY_ELEMS(s->DPB); i++) {

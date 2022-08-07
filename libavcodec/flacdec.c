@@ -675,4 +675,5 @@ const FFCodec ff_flac_decoder = {
                                                       AV_SAMPLE_FMT_S32P,
                                                       AV_SAMPLE_FMT_NONE },
     .p.priv_class   = &flac_decoder_class,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };

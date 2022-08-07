@@ -134,7 +134,6 @@ const FFCodec ff_libgsm_encoder = {
     .p.sample_fmts  = (const enum AVSampleFormat[]){ AV_SAMPLE_FMT_S16,
                                                      AV_SAMPLE_FMT_NONE },
     .p.wrapper_name = "libgsm",
-    .caps_internal  = FF_CODEC_CAP_NOT_INIT_THREADSAFE,
 };
 #endif
 #if CONFIG_LIBGSM_MS_ENCODER
@@ -155,6 +154,5 @@ const FFCodec ff_libgsm_ms_encoder = {
     .p.sample_fmts  = (const enum AVSampleFormat[]){ AV_SAMPLE_FMT_S16,
                                                      AV_SAMPLE_FMT_NONE },
     .p.wrapper_name = "libgsm",
-    .caps_internal  = FF_CODEC_CAP_NOT_INIT_THREADSAFE,
 };
 #endif

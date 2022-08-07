@@ -72,13 +72,13 @@ static AVMutex codec_mutex = AV_MUTEX_INITIALIZER;
 
 static void lock_avcodec(const FFCodec *codec)
 {
-    if (codec->caps_internal & FF_CODEC_CAP_NOT_INIT_THREADSAFE && codec->init)
+    if (!(codec->caps_internal & FF_CODEC_CAP_INIT_THREADSAFE) && codec->init)
         ff_mutex_lock(&codec_mutex);
 }
 
 static void unlock_avcodec(const FFCodec *codec)
 {
-    if (codec->caps_internal & FF_CODEC_CAP_NOT_INIT_THREADSAFE && codec->init)
+    if (!(codec->caps_internal & FF_CODEC_CAP_INIT_THREADSAFE) && codec->init)
         ff_mutex_unlock(&codec_mutex);
 }
 
@@ -160,6 +160,8 @@ int attribute_align_arg avcodec_open2(AVCodecContext *avctx, const AVCodec *code
         ret = AVERROR(ENOMEM);
         goto free_and_end;
     }
+
+    avci->skip_samples_multiplier = 1;
 
     if (codec2->priv_data_size > 0) {
         if (!avctx->priv_data) {
@@ -478,10 +480,6 @@ av_cold int avcodec_close(AVCodecContext *avctx)
         av_bsf_free(&avci->bsf);
 
         av_channel_layout_uninit(&avci->initial_ch_layout);
-
-#if CONFIG_LCMS2
-        ff_icc_context_uninit(&avci->icc);
-#endif
 
         av_freep(&avctx->internal);
     }

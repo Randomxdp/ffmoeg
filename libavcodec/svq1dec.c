@@ -856,4 +856,5 @@ const FFCodec ff_svq1_decoder = {
     .flush          = svq1_flush,
     .p.pix_fmts     = (const enum AVPixelFormat[]) { AV_PIX_FMT_YUV410P,
                                                      AV_PIX_FMT_NONE },
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };

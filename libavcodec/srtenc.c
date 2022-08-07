@@ -302,6 +302,7 @@ const FFCodec ff_srt_encoder = {
     .init           = srt_encode_init,
     FF_CODEC_ENCODE_SUB_CB(srt_encode_frame),
     .close          = srt_encode_close,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };
 #endif
 
@@ -315,6 +316,7 @@ const FFCodec ff_subrip_encoder = {
     .init           = srt_encode_init,
     FF_CODEC_ENCODE_SUB_CB(srt_encode_frame),
     .close          = srt_encode_close,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };
 #endif
 
@@ -328,5 +330,6 @@ const FFCodec ff_text_encoder = {
     .init           = srt_encode_init,
     FF_CODEC_ENCODE_SUB_CB(text_encode_frame),
     .close          = srt_encode_close,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };
 #endif

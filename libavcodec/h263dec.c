@@ -258,8 +258,7 @@ static int decode_slice(MpegEncContext *s)
         for (; s->mb_x < s->mb_width; s->mb_x++) {
             int ret;
 
-            ff_update_block_index(s, s->avctx->bits_per_raw_sample,
-                                  s->avctx->lowres, s->chroma_x_shift);
+            ff_update_block_index(s);
 
             if (s->resync_mb_x == s->mb_x && s->resync_mb_y + 1 == s->mb_y)
                 s->first_slice_line = 0;
@@ -769,7 +768,8 @@ const FFCodec ff_h263_decoder = {
                       AV_CODEC_CAP_TRUNCATED |
 #endif
                       AV_CODEC_CAP_DELAY,
-    .caps_internal  = FF_CODEC_CAP_SKIP_FRAME_FILL_PARAM,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE |
+                      FF_CODEC_CAP_SKIP_FRAME_FILL_PARAM,
     .flush          = ff_mpeg_flush,
     .p.max_lowres   = 3,
     .p.pix_fmts     = ff_h263_hwaccel_pixfmt_list_420,
@@ -790,7 +790,8 @@ const FFCodec ff_h263p_decoder = {
                       AV_CODEC_CAP_TRUNCATED |
 #endif
                       AV_CODEC_CAP_DELAY,
-    .caps_internal  = FF_CODEC_CAP_SKIP_FRAME_FILL_PARAM,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE |
+                      FF_CODEC_CAP_SKIP_FRAME_FILL_PARAM,
     .flush          = ff_mpeg_flush,
     .p.max_lowres   = 3,
     .p.pix_fmts     = ff_h263_hwaccel_pixfmt_list_420,

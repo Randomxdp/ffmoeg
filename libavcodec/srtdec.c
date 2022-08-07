@@ -99,6 +99,7 @@ const FFCodec ff_srt_decoder = {
     FF_CODEC_DECODE_SUB_CB(srt_decode_frame),
     .flush        = ff_ass_decoder_flush,
     .priv_data_size = sizeof(FFASSDecoderContext),
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };
 #endif
 
@@ -112,5 +113,6 @@ const FFCodec ff_subrip_decoder = {
     FF_CODEC_DECODE_SUB_CB(srt_decode_frame),
     .flush        = ff_ass_decoder_flush,
     .priv_data_size = sizeof(FFASSDecoderContext),
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
 };
 #endif

@@ -131,14 +131,7 @@ static int audio_write_frame(AVFormatContext *s1, int stream_index,
     pkt.data     = (*frame)->data[0];
     pkt.size     = (*frame)->nb_samples * s->frame_size;
     pkt.dts      = (*frame)->pkt_dts;
-#if FF_API_PKT_DURATION
-FF_DISABLE_DEPRECATION_WARNINGS
-    if ((*frame)->pkt_duration)
-        pkt.duration = (*frame)->pkt_duration;
-    else
-FF_ENABLE_DEPRECATION_WARNINGS
-#endif
-    pkt.duration = (*frame)->duration;
+    pkt.duration = (*frame)->pkt_duration;
     return audio_write_packet(s1, &pkt);
 }
 
